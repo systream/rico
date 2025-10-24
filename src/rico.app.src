@@ -1,0 +1,19 @@
+{application, rico,
+ [{description, "RIAK connector"},
+  {vsn, git},
+  {registered, []},
+  {mod, {rico_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    sasl,
+    public_key,
+    riakc,
+    poolboy
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {licenses, ["Apache-2.0"]},
+  {links, []}
+ ]}.
