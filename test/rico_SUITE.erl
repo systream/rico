@@ -108,7 +108,8 @@ all() ->
     os_env_not_leak_to_non_default,
     store,
     disconnected,
-    delete
+    delete,
+    stat
   ].
 
 %%--------------------------------------------------------------------
@@ -297,3 +298,12 @@ delete(_Config) ->
   % store
   ?assertEqual(ok, rico:remove(rico:new_obj(Bucket, Key, <<"bar">>))),
   ?assertEqual(ok, rico:remove(test, rico:new_obj(Bucket, Key, <<"bar">>))).
+
+stat(_Config) ->
+  % just for cover
+  ?assertMatch([{[remove, rate], _},
+                {[remove, time], _},
+                {[fetch, rate], _},
+                {[fetch, time], _},
+                {[store, rate], _},
+                {[store, time], _}], rico_metrics:stat()).

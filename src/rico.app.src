@@ -9,7 +9,8 @@
     sasl,
     public_key,
     riakc,
-    poolboy
+    poolboy,
+    exometer_core
    ]},
   {env,[]},
   {modules, []},

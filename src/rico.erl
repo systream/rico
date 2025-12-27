@@ -45,7 +45,7 @@ store(Obj) ->
 
 -spec store(pool(), obj()) -> {ok, obj()} | {error, term()}.
 store(Pool, Obj) ->
-  execute(Pool, fun riakc_pb_socket:put/3, [Obj, [return_body]]).
+  measure(store, fun() -> execute(Pool, fun riakc_pb_socket:put/3, [Obj, [return_body]]) end).
 
 -spec fetch(bucket(), key()) -> {ok, obj()} | not_found | {error, term()}.
 fetch(Bucket, Key) ->
@@ -53,7 +53,7 @@ fetch(Bucket, Key) ->
 
 -spec fetch(pool(), bucket(), key()) -> {ok, obj()} | not_found | {error, term()}.
 fetch(Pool, Bucket, Key) ->
-  case execute(Pool, fun riakc_pb_socket:get/3, [Bucket, Key]) of
+  case measure(fetch, fun() -> execute(Pool, fun riakc_pb_socket:get/3, [Bucket, Key]) end) of
     {error, notfound} ->
       not_found;
     {error, notfound, _VC} ->
@@ -68,7 +68,7 @@ remove(Obj) ->
 
 -spec remove(pool(), obj()) -> ok | {error, term()}.
 remove(Pool, Obj) ->
-  execute(Pool, fun riakc_pb_socket:delete_obj/2, [Obj]).
+  measure(remove, fun() -> execute(Pool, fun riakc_pb_socket:delete_obj/2, [Obj]) end).
 
 -spec value(obj()) -> data().
 value(Obj) ->
@@ -101,3 +101,9 @@ retry_wrap(Pool, Fun, Args, MaxRetry) ->
     Else ->
       Else
   end.
+
+measure(Name, Fun) ->
+  {Time, Result} = timer:tc(Fun),
+  rico_metrics:update([Name, time], Time),
+  rico_metrics:count([Name, rate]),
+  Result.
