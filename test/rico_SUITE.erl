@@ -230,6 +230,7 @@ store(_Config) ->
   % fetch and update
   meck:expect(riakc_pb_socket, get, fun(_, _, _) -> {ok, Obj} end),
   {ok, Obj2} = rico:store(Bucket, Key, <<"bar2">>),
+  ?assertEqual(Key, rico:key(Obj2)),
   {ok, Obj3} = rico:store(test, Bucket, Key, <<"bar2">>),
   ?assertEqual(<<"bar2">>, rico:value(Obj2)),
   ?assertEqual(<<"bar2">>, rico:value(Obj3)),

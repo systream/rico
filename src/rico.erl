@@ -20,6 +20,7 @@
 -export([store/1, store/2,
          fetch/2, fetch/3,
          value/1, value/2,
+         key/1,
          new_obj/3,
          store/3, store/4,
          remove/1, remove/2]).
@@ -73,6 +74,10 @@ remove(Pool, Obj) ->
 -spec value(obj()) -> data().
 value(Obj) ->
   riakc_obj:get_update_value(Obj).
+
+-spec key(obj()) -> key().
+key(Obj) ->
+  riakc_obj:key(Obj).
 
 -spec value(obj(), data()) -> obj().
 value(Obj, NewData) ->
