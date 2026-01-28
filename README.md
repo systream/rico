@@ -40,9 +40,9 @@ Default pool's properties can be overwritten with OS env parameters:
 * POOL_SIZE for size of the pool
 
 
-#### setup RIAK certs
+## setup RIAK
 
-#### Install riak
+### Certs
 #### Generate ROOT
 ```bash
 ## Generate Root CA and CSR
@@ -80,6 +80,29 @@ You need for the client the following files:
 * rico.key 
 * rico.crt 
 * rootCA.crt
+
+### Add User
+You need to create a user and grant permissions.
+
+```bash
+riak admin security add-user rico password=ricopw
+riak admin security add-source rico 0.0.0.0/32 certificate
+riak admin security grant riak_kv.get,riak_kv.put,riak_kv.delete on any to rico
+```
+
+#### Create Bucket Type
+It is recommended to use bucket types.
+
+```bash
+riak admin bucket-type create rico_bucket '{"props":{"allow_mult":false,"notfound_ok":false}}'
+riak admin bucket-type activate rico_bucket
+```
+
+**Why `allow_mult=false` matters?**
+By default, Riak allows multiple versions of the same object (siblings) when concurrent writes occur. Setting `allow_mult` to `false` disables this behavior.
+*   **Simplicity**: The application does not need to handle conflict resolution (merging siblings).
+*   **Behavior**: When `false`, Riak resolves conflicts automatically (usually Last Write Wins). This avoids strict vector clock management on the client side, simplifying the usage of this connector.
+
 
 
 Build
