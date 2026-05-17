@@ -1,6 +1,6 @@
 %%%-------------------------------------------------------------------
-%%% @author tihi
-%%% @copyright (C) 2025, <COMPANY>
+%%% @author Peter Tihanyi
+%%% @copyright (C) 2025, systream
 %%% @doc
 %%%
 %%% @end
@@ -99,7 +99,7 @@ retry_wrap(Pool, Fun, Args, MaxRetry) ->
     {error, disconnected} when MaxRetry >= 0 ->
       logger:warning("No connection to riak, retry"),
       [Pid | RemArgs] = Args,
-      timer:sleep(rand:uniform(5)),
+      timer:sleep(3 + rand:uniform(7)),
       NewPid = rico_pool:checkout(Pool),
       rico_pool:checkin(Pool, Pid),
       retry_wrap(Pool, Fun, [NewPid | RemArgs], MaxRetry - 1);

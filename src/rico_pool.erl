@@ -1,6 +1,6 @@
 %%%-------------------------------------------------------------------
-%%% @author tihi
-%%% @copyright (C) 2025, <COMPANY>
+%%% @author Peter Tihanyi
+%%% @copyright (C) 2025, systream
 %%% @doc
 %%%
 %%% @end
@@ -8,6 +8,7 @@
 -module(rico_pool).
 
 -define(DEFAULT_POOL, default).
+-define(DEFAULT_TIMEOUT, 5000).
 
 %% API
 -export([start_link/1, child_spec/1,
@@ -63,7 +64,8 @@ checkout() ->
 
 -spec checkout(atom()) -> pid().
 checkout(PoolName) ->
-  poolboy:checkout(PoolName, true).
+  Timeout = application:get_env(rico, pool_checkout_timeout, ?DEFAULT_TIMEOUT),
+  poolboy:checkout(PoolName, true, Timeout).
 
 -spec checkin(pid()) -> ok.
 checkin(Pid) ->

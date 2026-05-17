@@ -109,7 +109,8 @@ all() ->
     store,
     disconnected,
     delete,
-    stat
+    stat,
+    pool_overuse
   ].
 
 %%--------------------------------------------------------------------
@@ -308,3 +309,30 @@ stat(_Config) ->
                 {[fetch, time], _},
                 {[store, rate], _},
                 {[store, time], _}], rico_metrics:stat()).
+
+
+pool_overuse(_Config) ->
+  meck:new(riakc_pb_socket, [passthrough]),
+  meck:expect(riakc_pb_socket, start_link, fun(_, _, _) ->
+    {ok, spawn_link(fun() -> timer:sleep(timer:seconds(30)) end)}
+                                           end),
+  meck:expect(riakc_pb_socket, get, fun(_, _, _) -> timer:sleep(100), {ok, disconnected} end),
+  meck:expect(riakc_pb_socket, put, fun(_, Obj, _) -> {ok, Obj} end),
+
+  application:stop(rico),
+  PoolCfg = #{
+    pool_size => 3,
+    host => "localhost",
+    port => "8087",
+    user => "rico",
+    pw => "ricopw",
+    cacertfile => {priv_dir, rico, "rootCA.crt"},
+    certfile => "/tmp/cacert",
+    keyfile => {priv_dir, rico, "rico.key"}
+  },
+  application:set_env(rico, pools, #{default => PoolCfg, test => PoolCfg}),
+  {ok, _} = application:ensure_all_started(rico),
+
+  [spawn(fun() -> rico:fetch(<<"test">>,  I) end) || I <- lists:seq(1, 10)],
+  ct:sleep(10),
+  ?assertMatch({0, _}, rico_pool:status(default)).
