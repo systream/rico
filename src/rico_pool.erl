@@ -42,6 +42,7 @@ start_link([PoolName]) ->
   User = get_pool_config_parameter(PoolName, user),
   Pass = get_pool_config_parameter(PoolName, pw),
   logger:info("User ~p connecting to ~p on ~p", [User, Host, Port]),
+  ServerNameIndication = get_pool_config_parameter(PoolName, server_name_indication, disabled),
   riakc_pb_socket:start_link(Host, Port,
                               [{auto_reconnect, true},
                                {keepalive, true},
@@ -50,7 +51,7 @@ start_link([PoolName]) ->
                                {certfile, get_pool_config_parameter(PoolName, certfile)},
                                {keyfile, get_pool_config_parameter(PoolName, keyfile)},
                                {ssl_opts, [
-                                 {server_name_indication, Host},
+                                 {server_name_indication, ServerNameIndication},
                                  {customize_hostname_check, [
                                    {match_fun, public_key:pkix_verify_hostname_match_fun(https)}
                                  ]}
@@ -85,11 +86,15 @@ get_pool_config(Pool) ->
   maps:get(Pool, get_pools_config()).
 
 -spec get_pool_config_parameter(atom(), atom()) -> term().
-get_pool_config_parameter(?DEFAULT_POOL, Parameter) ->
-  Default = maps:get(Parameter, get_pool_config(?DEFAULT_POOL)),
+get_pool_config_parameter(Pool, Parameter) ->
+  get_pool_config_parameter(Pool, Parameter, undefined).
+
+-spec get_pool_config_parameter(atom(), atom(), term()) -> term().
+get_pool_config_parameter(?DEFAULT_POOL, Parameter, DefaultFallback) ->
+  Default = maps:get(Parameter, get_pool_config(?DEFAULT_POOL), DefaultFallback),
   maybe_convert(Parameter, get_os_parameter(Parameter, Default));
-get_pool_config_parameter(PoolName, Parameter) ->
-  maybe_convert(Parameter, maps:get(Parameter, get_pool_config(PoolName))).
+get_pool_config_parameter(PoolName, Parameter, DefaultFallback) ->
+  maybe_convert(Parameter, maps:get(Parameter, get_pool_config(PoolName), DefaultFallback)).
 
 -spec maybe_convert(atom(), string()) -> string() | integer().
 maybe_convert(port, Value) when is_list(Value) ->
@@ -112,8 +117,10 @@ sys_config_to_os_env_map(pw)          -> "RIAK_PW";
 sys_config_to_os_env_map(cacertfile)  -> "RIAK_CACERTFILE";
 sys_config_to_os_env_map(certfile)    -> "RIAK_CERTFILE";
 sys_config_to_os_env_map(keyfile)     -> "RIAK_KEYFILE";
-sys_config_to_os_env_map(pool_size)   -> "POOL_SIZE".
+sys_config_to_os_env_map(pool_size)   -> "POOL_SIZE";
+sys_config_to_os_env_map(server_name_indication) -> "RIAK_SERVER_NAME_INDICATION".
+
 
 -spec get_os_parameter(atom(), term()) -> term().
 get_os_parameter(Parameter, DefaultValue) ->
-  os:getenv(sys_config_to_os_env_map(Parameter),  DefaultValue).
+  os:getenv(sys_config_to_os_env_map(Parameter), DefaultValue).
