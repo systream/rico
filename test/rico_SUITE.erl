@@ -110,7 +110,8 @@ all() ->
     disconnected,
     delete,
     stat,
-    pool_overuse
+    pool_overuse,
+    siblings
   ].
 
 %%--------------------------------------------------------------------
@@ -336,3 +337,24 @@ pool_overuse(_Config) ->
   [spawn(fun() -> rico:fetch(<<"test">>,  I) end) || I <- lists:seq(1, 10)],
   ct:sleep(10),
   ?assertMatch({0, _}, rico_pool:status(default)).
+
+siblings(_Config) ->
+  Bucket = <<"bucket">>,
+  Key = <<"key">>,
+  %% Create an object with 2 siblings
+  Obj = riakc_obj:new_obj(Bucket, Key, <<"vclock">>, [{dict:new(), <<"val1">>}, {dict:new(), <<"val2">>}]),
+
+  ?assertEqual(true, rico:has_siblings(Obj)),
+  ?assertEqual(2, rico:value_count(Obj)),
+  ?assertEqual([<<"val1">>, <<"val2">>], rico:values(Obj)),
+
+  %% Resolve sibling by setting a new value using
+  ResolvedObj = rico:value(Obj, <<"resolved_val">>),
+
+  %% The update value is applied
+  ?assertEqual(<<"resolved_val">>, rico:value(ResolvedObj)),
+
+  %% Select a specific sibling
+  SelectedObj = rico:select_sibling(Obj, 2),
+  ?assertEqual(<<"val2">>, rico:value(SelectedObj)),
+  ok.

@@ -20,6 +20,10 @@
 -export([store/1, store/2,
          fetch/2, fetch/3,
          value/1, value/2,
+         values/1,
+         has_siblings/1,
+         value_count/1,
+         select_sibling/2,
          key/1,
          new_obj/3,
          store/3, store/4,
@@ -74,6 +78,22 @@ remove(Pool, Obj) ->
 -spec value(obj()) -> data().
 value(Obj) ->
   riakc_obj:get_update_value(Obj).
+
+-spec values(obj()) -> [data()].
+values(Obj) ->
+  riakc_obj:get_values(Obj).
+
+-spec has_siblings(obj()) -> boolean().
+has_siblings(Obj) ->
+  value_count(Obj) > 1.
+
+-spec value_count(obj()) -> non_neg_integer().
+value_count(Obj) ->
+  riakc_obj:value_count(Obj).
+
+-spec select_sibling(obj(), pos_integer()) -> obj().
+select_sibling(Obj, Index) ->
+  riakc_obj:select_sibling(Index, Obj).
 
 -spec key(obj()) -> key().
 key(Obj) ->
